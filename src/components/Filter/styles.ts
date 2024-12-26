@@ -1,5 +1,4 @@
 import { TouchableOpacity } from "react-native";
-import { Filter } from "react-native-svg";
 import styled, { css } from "styled-components/native";
 
 export type FillterStyleProps = {
@@ -23,7 +22,7 @@ export const Container = styled(TouchableOpacity) <FillterStyleProps>`
 
 
 export const Title = styled.Text`
-text-transform: uppercase;
+    text-transform: uppercase;
     ${({ theme }) => css`
         font-family: ${theme.FONT_FAMILY.BOLD};
         font-size: ${theme.FONT_SIZE.SM}px;
