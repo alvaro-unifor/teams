@@ -4,8 +4,8 @@ import { Container, Form, HeaderList, NumberOfPlayers } from "./styles";
 import { Highlight } from "@components/Highlight";
 import { Input } from "@components/Input";
 import { Filter } from "@components/Filter";
-import { Alert, FlatList } from "react-native";
-import { useState, useEffect } from "react";
+import { Alert, FlatList, TextInput } from "react-native";
+import { useState, useEffect, useRef } from "react";
 import { PlayerCard } from "@components/PlayerCard";
 import { ListEmpty } from "@components/ListEmpty";
 import { Button } from "@components/Button";
@@ -15,6 +15,7 @@ import { playerAddByGroup } from "@storage/player/playerAddByGroup";
 import { playersGetByGroup } from "@storage/player/playersGetByGroup";
 import { playerGetByGroupAndTeam } from "@storage/player/playerGetByGroupAndTeam";
 import { PlayerStorageDTO } from "@storage/player/PlayerStorageDTO";
+import { playerRemoveByGroup } from "@storage/player/playerRemoveByGroup";
 
 
 type RouteParams = {
@@ -30,7 +31,9 @@ export function Players() {
     const route = useRoute();
     const { group } = route.params as RouteParams;
 
-    async function handleAddPlayer(player: string) {
+    const newPlayerNameInputRef = useRef<TextInput>(null);
+
+    async function handleAddPlayer() {
         if (newPlayerName.trim().length === 0) {
             return Alert.alert('Nova Pessoa', 'Informe o nome da pessoa para adicionar');
         }
@@ -41,8 +44,10 @@ export function Players() {
 
         try {
             await playerAddByGroup(newPlayer, group);
+            newPlayerNameInputRef.current?.blur();
+            
             fetchPlayersByTeam();
-
+            setNewPlayerName('');
         } catch (error) {
             if(error instanceof AppError) {
                 Alert.alert('Nova Pessoa', error.message);
@@ -51,7 +56,6 @@ export function Players() {
                 Alert.alert('Nova Pessoa', 'Ocorreu um erro ao adicionar a pessoa');
             }
         }
-        setNewPlayerName('');
     }
 
     async function fetchPlayersByTeam() {
@@ -62,6 +66,16 @@ export function Players() {
         } catch (error) {
             console.log(error);
             Alert.alert('Pessoas', 'Não foi possivel carregar as pessoas');
+        }
+    }
+
+    async function handlePlayerRemove(playerName: string) {
+        try {
+            await playerRemoveByGroup(playerName, group);
+            fetchPlayersByTeam();
+        } catch (error) {
+            console.log(error);
+            Alert.alert('Remover Pessoa', 'Não foi possivel remover a pessoa');
         }
     }
 
@@ -78,16 +92,19 @@ export function Players() {
                 subtitle="adicione a galera e separe os times"
             />
             <Form>
-                <Input 
+                <Input
+                    inputRef={newPlayerNameInputRef}
                     placeholder="Nome da pessoa"
                     autoCorrect={false}
                     autoCapitalize="none"
                     onChangeText={setNewPlayerName}
                     value={newPlayerName}
+                    onSubmitEditing={handleAddPlayer}
+                    returnKeyType="done"
                 />
                 <ButtonIcon 
                     icon="add"
-                    onPress={() => handleAddPlayer(newPlayerName)}
+                    onPress={() => handleAddPlayer()}
                 />
             </Form>
 
@@ -118,7 +135,7 @@ export function Players() {
                 renderItem={({ item }) => (
                     <PlayerCard 
                         name={item.name}
-                        onRemove={() => {}}
+                        onRemove={() => handlePlayerRemove(item.name)}
                     />
                 )}
                 ListEmptyComponent={() => (
